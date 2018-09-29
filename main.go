@@ -65,7 +65,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "upgrade [RELEASE] [CHART]",
-		Short: "upgrade a release including linkerd inject",
+		Short: "upgrade a release including inject (default injector: linkerd)",
 		Long:  ``,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {

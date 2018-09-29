@@ -20,7 +20,7 @@ $ helm inject upgrade [flags]
 
 ```
 $ helm inject upgrade --help
-upgrade a release including linkerd inject
+upgrade a release including inject (default injector: linkerd)
 
 Usage:
   inject upgrade [RELEASE] [CHART] [flags]
