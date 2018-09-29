@@ -71,6 +71,9 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 			if len(args) != 2 {
 				return errors.New("requires at least two args")
 			}
+			if u.injector == "helm" {
+				return errors.New("why you do this to me")
+			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
