@@ -1,0 +1,5 @@
+package: github.com/maorfr/helm-inject
+import:
+- package: github.com/otiai10/copy
+- package: github.com/spf13/cobra
+  version: v0.0.3

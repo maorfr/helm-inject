@@ -1,0 +1,8 @@
+name: "inject"
+# Version is the version of Helm plus the number of official builds for this plugin
+version: "2.9.1+1"
+usage: "inject resources during chart installation"
+description: "inject plugin for Helm"
+command: "$HELM_PLUGIN_DIR/inj"
+hooks:
+  install: "$HELM_PLUGIN_DIR/install-binary.sh"
