@@ -159,7 +159,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 
 	f.BoolVar(&u.tls, "tls", false, "enable TLS for request")
 	f.StringVar(&u.tlsCert, "tls-cert", "", "path to TLS certificate file (default: $HELM_HOME/cert.pem)")
-	f.StringVar(&u.tlsKey, "tls-key", "", " path to TLS key file (default: $HELM_HOME/key.pem)")
+	f.StringVar(&u.tlsKey, "tls-key", "", "path to TLS key file (default: $HELM_HOME/key.pem)")
 
 	return cmd
 }
