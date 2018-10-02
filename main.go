@@ -96,9 +96,6 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 			if err != nil {
 				skip = true
 			}
-			for _, f := range files {
-				fmt.Println(f)
-			}
 			if !skip {
 				templateOptions := templateOptions{
 					files:       files,
@@ -301,7 +298,6 @@ func upgrade(o upgradeOptions) error {
 	}
 
 	command := fmt.Sprintf("helm upgrade %s %s%s", o.name, o.chart, additionalFlags)
-	fmt.Println(command)
 	output := Exec(command)
 	fmt.Println(string(output))
 
