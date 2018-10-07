@@ -152,7 +152,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 	f.StringArrayVar(&u.values, "set", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 	f.StringVar(&u.namespace, "namespace", "", "namespace to install the release into (only used if --install is set). Defaults to the current kube config namespace")
 	f.StringVar(&u.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
-	f.StringVar(&u.kubeConfig, "kubeconfig", "", "absolute path to the kubeconfig file to use")
+	f.StringVar(&u.kubeConfig, "kubeconfig", os.Getenv("KUBECONFIG"), "absolute path to the kubeconfig file to use")
 
 	f.BoolVarP(&u.install, "install", "i", false, "if a release by this name doesn't already exist, run an install")
 	f.BoolVar(&u.dryRun, "dry-run", false, "simulate an upgrade")
