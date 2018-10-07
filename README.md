@@ -36,7 +36,7 @@ Flags:
       --set stringArray       set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)
       --tls                   enable TLS for request
       --tls-cert string       path to TLS certificate file (default: $HELM_HOME/cert.pem)
-      --tls-key string         path to TLS key file (default: $HELM_HOME/key.pem)
+      --tls-key string        path to TLS key file (default: $HELM_HOME/key.pem)
   -f, --values stringArray    specify values in a YAML file or a URL(can specify multiple)
 ```
 
