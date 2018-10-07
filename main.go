@@ -51,7 +51,6 @@ type upgradeCmd struct {
 	install     bool
 	namespace   string
 	kubeContext string
-	kubeConfig  string
 
 	tls     bool
 	tlsCert string
@@ -134,7 +133,6 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 					tls:         u.tls,
 					tlsCert:     u.tlsCert,
 					tlsKey:      u.tlsKey,
-					kubeConfig:  u.kubeConfig,
 				}
 				if err := upgrade(upgradeOptions); err != nil {
 					fmt.Fprintf(os.Stderr, err.Error())
@@ -148,11 +146,10 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 
 	f.StringVar(&u.injector, "injector", "linkerd", "injector to use (must be pre-installed)")
 
-	f.StringArrayVarP(&u.valueFiles, "values", "f", []string{}, "specify values in a YAML file or a URL(can specify multiple)")
+	f.StringArrayVarP(&u.valueFiles, "values", "f", []string{}, "specify values in a YAML file or a URL (can specify multiple)")
 	f.StringArrayVar(&u.values, "set", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 	f.StringVar(&u.namespace, "namespace", "", "namespace to install the release into (only used if --install is set). Defaults to the current kube config namespace")
-	f.StringVar(&u.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
-	f.StringVar(&u.kubeConfig, "kubeconfig", os.Getenv("KUBECONFIG"), "absolute path to the kubeconfig file to use")
+	f.StringVar(&u.kubeContext, "kubecontext", "", "name of the kubeconfig context to use")
 
 	f.BoolVarP(&u.install, "install", "i", false, "if a release by this name doesn't already exist, run an install")
 	f.BoolVar(&u.dryRun, "dry-run", false, "simulate an upgrade")
@@ -327,9 +324,6 @@ func upgrade(o upgradeOptions) error {
 	}
 	if o.tlsKey != "" {
 		additionalFlags += createFlagChain("tls-key", []string{o.tlsKey})
-	}
-	if o.kubeConfig != "" {
-		additionalFlags += createFlagChain("kubeconfig", []string{o.kubeConfig})
 	}
 
 	command := fmt.Sprintf("helm upgrade %s %s%s", o.name, o.chart, additionalFlags)

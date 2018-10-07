@@ -31,13 +31,13 @@ Flags:
   -h, --help                  help for upgrade
       --injector string       injector to use (must be pre-installed) (default "linkerd")
   -i, --install               if a release by this name doesn't already exist, run an install
-      --kube-context string   name of the kubeconfig context to use
+      --kubecontext string    name of the kubeconfig context to use (used instead of kube-context as it is ommited in plugins)
       --namespace string      namespace to install the release into (only used if --install is set). Defaults to the current kube config namespace
       --set stringArray       set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)
       --tls                   enable TLS for request
       --tls-cert string       path to TLS certificate file (default: $HELM_HOME/cert.pem)
       --tls-key string        path to TLS key file (default: $HELM_HOME/key.pem)
-  -f, --values stringArray    specify values in a YAML file or a URL(can specify multiple)
+  -f, --values stringArray    specify values in a YAML file or a URL (can specify multiple)
 ```
 
 
