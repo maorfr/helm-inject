@@ -82,7 +82,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 
 			skip := false
 
-			tempDir, err := copyTempDir(chart)
+			tempDir, err := copyToTempDir(chart)
 			if err != nil {
 				skip = true
 				fmt.Fprintf(os.Stderr, err.Error())
@@ -161,11 +161,30 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func copyTempDir(path string) (string, error) {
+// copyToTempDir checks if the path is local or a repo (in this order) and copies it to a temp directory
+// It will perform a `helm fetch` if required
+func copyToTempDir(path string) (string, error) {
 	tempDir := mkRandomDir(os.TempDir())
-	err := copy.Copy(path, tempDir)
+	exists, err := exists(path)
 	if err != nil {
 		return "", err
+	}
+	if !exists {
+		command := fmt.Sprintf("helm fetch %s --untar -d %s", path, tempDir)
+		Exec(command)
+		files, err := ioutil.ReadDir(tempDir)
+		if err != nil {
+			return "", err
+		}
+		if len(files) != 1 {
+			return "", fmt.Errorf("%d additional files found in temp direcotry. This is very strange", len(files)-1)
+		}
+		tempDir = filepath.Join(tempDir, files[0].Name())
+	} else {
+		err = copy.Copy(path, tempDir)
+		if err != nil {
+			return "", err
+		}
 	}
 	return tempDir, nil
 }
@@ -344,4 +363,16 @@ func createFlagChain(flag string, input []string) string {
 	}
 
 	return chain
+}
+
+// exists returns whether the given file or directory exists or not
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
 }
