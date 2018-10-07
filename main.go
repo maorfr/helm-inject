@@ -59,7 +59,7 @@ type upgradeCmd struct {
 	out io.Writer
 }
 
-// NewUpgradeCommand represents the copy command
+// NewUpgradeCommand represents the upgrade command
 func NewUpgradeCommand(out io.Writer) *cobra.Command {
 	u := &upgradeCmd{out: out}
 
@@ -69,7 +69,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 		Long:  ``,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
-				return errors.New("requires at least two args")
+				return errors.New("requires two arguments")
 			}
 			if u.injector == "helm" {
 				return errors.New("why you do this to me")
@@ -115,6 +115,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 					files:    files,
 				}
 				if err := inject(injectOptions); err != nil {
+					skip = true
 					fmt.Fprintf(os.Stderr, err.Error())
 				}
 			}
@@ -222,15 +223,23 @@ type templateOptions struct {
 }
 
 func template(o templateOptions) error {
-	additionalFlags := ""
-	additionalFlags = additionalFlags + createFlagChain("set", o.values)
-	additionalFlags = additionalFlags + createFlagChain("f", o.valuesFiles)
+	var additionalFlags string
+	additionalFlags += createFlagChain("set", o.values)
+	defaultValuesPath := filepath.Join(o.chart, "values.yaml")
+	exists, err := exists(defaultValuesPath)
+	if err != nil {
+		return err
+	}
+	if exists {
+		additionalFlags += createFlagChain("f", []string{defaultValuesPath})
+	}
+	additionalFlags += createFlagChain("f", o.valuesFiles)
 	if o.namespace != "" {
-		additionalFlags = additionalFlags + createFlagChain("namespace", []string{o.namespace})
+		additionalFlags += createFlagChain("namespace", []string{o.namespace})
 	}
 
 	for _, file := range o.files {
-		command := fmt.Sprintf("helm template %s --name %s -x %s%s", o.chart, o.name, file, additionalFlags)
+		command := fmt.Sprintf("helm template --debug=false %s --name %s -x %s%s", o.chart, o.name, file, additionalFlags)
 		output := Exec(command)
 		if err := ioutil.WriteFile(file, output, 0644); err != nil {
 			return err
