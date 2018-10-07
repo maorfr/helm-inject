@@ -74,3 +74,4 @@ That last command will skip fetching the binary install and use the one you buil
 
 * Not all `helm upgrade` flags are added. If you need any other flags from `helm upgrade` - you are welcome to open an issue, or even submit a PR.
 * Inject currently does not take flags. If you need any flags for the default injector (linkerd) - you are welcome to open an issue, or even submit a PR.
+* If you are using the `--kube-context` flag, you need to change it to `--kubecontext`, since helm plugins [drop this flag](https://github.com/helm/helm/blob/master/docs/plugins.md).
