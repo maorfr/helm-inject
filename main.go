@@ -51,6 +51,7 @@ type upgradeCmd struct {
 	install     bool
 	namespace   string
 	kubeContext string
+	kubeConfig  string
 
 	tls     bool
 	tlsCert string
@@ -133,6 +134,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 					tls:         u.tls,
 					tlsCert:     u.tlsCert,
 					tlsKey:      u.tlsKey,
+					kubeConfig:  u.kubeConfig,
 				}
 				if err := upgrade(upgradeOptions); err != nil {
 					fmt.Fprintf(os.Stderr, err.Error())
@@ -150,6 +152,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 	f.StringArrayVar(&u.values, "set", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 	f.StringVar(&u.namespace, "namespace", "", "namespace to install the release into (only used if --install is set). Defaults to the current kube config namespace")
 	f.StringVar(&u.kubeContext, "kube-context", "", "name of the kubeconfig context to use")
+	f.StringVar(&u.kubeConfig, "kubeconfig", "", "absolute path to the kubeconfig file to use")
 
 	f.BoolVarP(&u.install, "install", "i", false, "if a release by this name doesn't already exist, run an install")
 	f.BoolVar(&u.dryRun, "dry-run", false, "simulate an upgrade")
@@ -294,35 +297,39 @@ type upgradeOptions struct {
 	tls         bool
 	tlsCert     string
 	tlsKey      string
+	kubeConfig  string
 }
 
 func upgrade(o upgradeOptions) error {
-	additionalFlags := ""
-	additionalFlags = additionalFlags + createFlagChain("set", o.values)
-	additionalFlags = additionalFlags + createFlagChain("f", o.valuesFiles)
+	var additionalFlags string
+	additionalFlags += createFlagChain("set", o.values)
+	additionalFlags += createFlagChain("f", o.valuesFiles)
 	if o.namespace != "" {
-		additionalFlags = additionalFlags + createFlagChain("namespace", []string{o.namespace})
+		additionalFlags += createFlagChain("namespace", []string{o.namespace})
 	}
 	if o.kubeContext != "" {
-		additionalFlags = additionalFlags + createFlagChain("kube-context", []string{o.kubeContext})
+		additionalFlags += createFlagChain("kube-context", []string{o.kubeContext})
 	}
 	if o.install {
-		additionalFlags = additionalFlags + createFlagChain("i", []string{""})
+		additionalFlags += createFlagChain("i", []string{""})
 	}
 	if o.dryRun {
-		additionalFlags = additionalFlags + createFlagChain("dry-run", []string{""})
+		additionalFlags += createFlagChain("dry-run", []string{""})
 	}
 	if o.debug {
-		additionalFlags = additionalFlags + createFlagChain("debug", []string{""})
+		additionalFlags += createFlagChain("debug", []string{""})
 	}
 	if o.tls {
-		additionalFlags = additionalFlags + createFlagChain("tls", []string{""})
+		additionalFlags += createFlagChain("tls", []string{""})
 	}
 	if o.tlsCert != "" {
-		additionalFlags = additionalFlags + createFlagChain("tls-cert", []string{o.tlsCert})
+		additionalFlags += createFlagChain("tls-cert", []string{o.tlsCert})
 	}
 	if o.tlsKey != "" {
-		additionalFlags = additionalFlags + createFlagChain("tls-key", []string{o.tlsKey})
+		additionalFlags += createFlagChain("tls-key", []string{o.tlsKey})
+	}
+	if o.kubeConfig != "" {
+		additionalFlags += createFlagChain("kubeconfig", []string{o.kubeConfig})
 	}
 
 	command := fmt.Sprintf("helm upgrade %s %s%s", o.name, o.chart, additionalFlags)
