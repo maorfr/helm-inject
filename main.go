@@ -319,10 +319,10 @@ func upgrade(o upgradeOptions) error {
 		additionalFlags = additionalFlags + createFlagChain("tls", []string{""})
 	}
 	if o.tlsCert != "" {
-		additionalFlags = additionalFlags + createFlagChain("debug", []string{o.tlsCert})
+		additionalFlags = additionalFlags + createFlagChain("tls-cert", []string{o.tlsCert})
 	}
 	if o.tlsKey != "" {
-		additionalFlags = additionalFlags + createFlagChain("debug", []string{o.tlsKey})
+		additionalFlags = additionalFlags + createFlagChain("tls-key", []string{o.tlsKey})
 	}
 
 	command := fmt.Sprintf("helm upgrade %s %s%s", o.name, o.chart, additionalFlags)
