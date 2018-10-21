@@ -42,6 +42,7 @@ func NewRootCmd(args []string) *cobra.Command {
 
 type upgradeCmd struct {
 	injector    string
+	command     string
 	release     string
 	chart       string
 	dryRun      bool
@@ -65,7 +66,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "upgrade [RELEASE] [CHART]",
-		Short: "upgrade a release including inject (default injector: linkerd)",
+		Short: "upgrade a release including inject",
 		Long:  ``,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
@@ -112,6 +113,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 			if !skip {
 				injectOptions := injectOptions{
 					injector: u.injector,
+					command:  u.command,
 					files:    files,
 				}
 				if err := inject(injectOptions); err != nil {
@@ -145,6 +147,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 	f := cmd.Flags()
 
 	f.StringVar(&u.injector, "injector", "linkerd", "injector to use (must be pre-installed)")
+	f.StringVar(&u.command, "command", "inject", "injection command to be used")
 
 	f.StringArrayVarP(&u.valueFiles, "values", "f", []string{}, "specify values in a YAML file or a URL (can specify multiple)")
 	f.StringArrayVar(&u.values, "set", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
@@ -251,12 +254,13 @@ func template(o templateOptions) error {
 
 type injectOptions struct {
 	injector string
+	command  string
 	files    []string
 }
 
 func inject(o injectOptions) error {
 	for _, file := range o.files {
-		command := fmt.Sprintf("%s inject %s", o.injector, file)
+		command := fmt.Sprintf("%s %s %s", o.injector, o.command, file)
 		output := Exec(command)
 		if o.injector == "linkerd" {
 			output = removeSummary(output)
