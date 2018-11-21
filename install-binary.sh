@@ -8,7 +8,7 @@ if [ -n "${HELM_PUSH_PLUGIN_NO_INSTALL_HOOK}" ]; then
     exit 0
 fi
 
-version="$(cat plugin.yaml | grep "version" | cut -d '"' -f 2)"
+version="$(curl -s https://api.github.com/repos/maorfr/helm-inject/releases/latest | awk '/\"tag_name\":/{gsub( /[,\"]/,"", $2); print $2}')"
 echo "Downloading and installing helm-inject ${version} ..."
 
 url=""

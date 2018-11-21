@@ -28,6 +28,8 @@ dist:
 	tar -zcvf $(DIST)/$(PLUGIN_NAME)-macos-$(VERSION).tgz $(BINARY_NAME) README.md LICENSE.txt plugin.yaml
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o $(BINARY_NAME).exe -ldflags $(LDFLAGS) ./main.go
 	tar -zcvf $(DIST)/$(PLUGIN_NAME)-windows-$(VERSION).tgz $(BINARY_NAME).exe README.md LICENSE.txt plugin.yaml
+	rm inj
+	rm inj.exe
 
 .PHONY: bootstrap
 bootstrap:
