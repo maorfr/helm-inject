@@ -35,3 +35,4 @@ fi
 tar xzf "releases/${version}.tgz" -C "releases/${version}"
 mv "releases/${version}/inj" "bin/inj" || \
     mv "releases/${version}/inj.exe" "bin/inj"
+rm -rf releases
