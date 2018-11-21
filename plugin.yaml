@@ -4,5 +4,5 @@ usage: "inject resources during chart installation"
 description: "inject plugin for Helm"
 command: "$HELM_PLUGIN_DIR/bin/inj"
 hooks:
-  install: "$HELM_PLUGIN_DIR/install-binary.sh"
-  update: "$HELM_PLUGIN_DIR/install-binary.sh"
+  install: "cd $HELM_PLUGIN_DIR; install-binary.sh"
+  update: "cd $HELM_PLUGIN_DIR; install-binary.sh"
