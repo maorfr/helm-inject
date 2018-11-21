@@ -22,6 +22,7 @@ fi
 
 echo $url
 
+cd $HELM_PLUGIN_DIR
 mkdir -p "bin"
 mkdir -p "releases/${version}"
 
@@ -32,5 +33,5 @@ else
     wget -q "${url}" -O "releases/${version}.tgz"
 fi
 tar xzf "releases/${version}.tgz" -C "releases/${version}"
-mv "releases/${version}/bin/inj" "bin/inj" || \
-    mv "releases/${version}/bin/inj.exe" "bin/inj"
+mv "releases/${version}/inj" "bin/inj" || \
+    mv "releases/${version}/inj.exe" "bin/inj"
