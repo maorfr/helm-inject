@@ -52,6 +52,7 @@ type upgradeCmd struct {
 	install     bool
 	namespace   string
 	kubeContext string
+	timeout     int
 
 	tls     bool
 	tlsCert string
@@ -129,6 +130,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 					valuesFiles: u.valueFiles,
 					namespace:   u.namespace,
 					kubeContext: u.kubeContext,
+					timeout:     u.timeout,
 					install:     u.install,
 					dryRun:      u.dryRun,
 					debug:       u.debug,
@@ -153,6 +155,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 	f.StringArrayVar(&u.values, "set", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 	f.StringVar(&u.namespace, "namespace", "", "namespace to install the release into (only used if --install is set). Defaults to the current kube config namespace")
 	f.StringVar(&u.kubeContext, "kubecontext", "", "name of the kubeconfig context to use")
+	f.IntVar(&u.timeout, "timeout", 300, "time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks)")
 
 	f.BoolVarP(&u.install, "install", "i", false, "if a release by this name doesn't already exist, run an install")
 	f.BoolVar(&u.dryRun, "dry-run", false, "simulate an upgrade")
@@ -292,6 +295,7 @@ type upgradeOptions struct {
 	valuesFiles []string
 	namespace   string
 	kubeContext string
+	timeout     int
 	install     bool
 	dryRun      bool
 	debug       bool
@@ -305,6 +309,7 @@ func upgrade(o upgradeOptions) error {
 	var additionalFlags string
 	additionalFlags += createFlagChain("set", o.values)
 	additionalFlags += createFlagChain("f", o.valuesFiles)
+	additionalFlags += createFlagChain("timeout", []string{fmt.Sprintf("%d", o.timeout)})
 	if o.namespace != "" {
 		additionalFlags += createFlagChain("namespace", []string{o.namespace})
 	}

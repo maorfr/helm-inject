@@ -34,6 +34,7 @@ Flags:
       --kubecontext string   name of the kubeconfig context to use
       --namespace string     namespace to install the release into (only used if --install is set). Defaults to the current kube config namespace
       --set stringArray      set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)
+      --timeout int          time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks) (default 300)
       --tls                  enable TLS for request
       --tls-cert string      path to TLS certificate file (default: $HELM_HOME/cert.pem)
       --tls-key string       path to TLS key file (default: $HELM_HOME/key.pem)
