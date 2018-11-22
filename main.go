@@ -90,14 +90,20 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 				fmt.Fprintf(os.Stderr, err.Error())
 			}
 			fileOptions := fileOptions{
-				basePath: tempDir,
-				subPath:  "templates",
-				fileType: "yaml",
+				basePath:     tempDir,
+				matchSubPath: "templates",
+				fileType:     "yaml",
 			}
 			files, err := getFilesToActOn(fileOptions)
 			if err != nil {
 				skip = true
 			}
+
+			for _, f := range files {
+				fmt.Println(f)
+			}
+			return
+
 			if !skip {
 				templateOptions := templateOptions{
 					files:       files,
@@ -197,19 +203,23 @@ func copyToTempDir(path string) (string, error) {
 }
 
 type fileOptions struct {
-	basePath string
-	subPath  string
-	fileType string
+	basePath     string
+	matchSubPath string
+	fileType     string
 }
 
-func getFilesToActOn(options fileOptions) ([]string, error) {
+// getFilesToActOn returns a slice of files that are within the base path, has a matching sub path and file type
+func getFilesToActOn(o fileOptions) ([]string, error) {
 	var files []string
-	dir := filepath.Join(options.basePath, options.subPath)
 
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if strings.HasSuffix(path, options.fileType) {
-			files = append(files, path)
+	err := filepath.Walk(o.basePath, func(path string, info os.FileInfo, err error) error {
+		if !strings.Contains(path, o.matchSubPath+"/") {
+			return nil
 		}
+		if !strings.HasSuffix(path, o.fileType) {
+			return nil
+		}
+		files = append(files, path)
 		return nil
 	})
 	if err != nil {
