@@ -102,7 +102,6 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 			for _, f := range files {
 				fmt.Println(f)
 			}
-			return
 
 			if !skip {
 				templateOptions := templateOptions{
