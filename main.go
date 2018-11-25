@@ -82,13 +82,13 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 			release := args[0]
 			chart := args[1]
 
-			skip := false
-
 			tempDir, err := copyToTempDir(chart)
 			if err != nil {
-				skip = true
 				fmt.Fprintf(os.Stderr, err.Error())
+				return
 			}
+			defer os.RemoveAll(tempDir)
+
 			fileOptions := fileOptions{
 				basePath:     tempDir,
 				matchSubPath: "templates",
@@ -96,59 +96,52 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 			}
 			files, err := getFilesToActOn(fileOptions)
 			if err != nil {
-				skip = true
+				fmt.Fprintf(os.Stderr, err.Error())
+				return
 			}
 
-			for _, f := range files {
-				fmt.Println(f)
+			templateOptions := templateOptions{
+				files:       files,
+				chart:       tempDir,
+				name:        release,
+				namespace:   u.namespace,
+				values:      u.values,
+				valuesFiles: u.valueFiles,
+			}
+			if err := template(templateOptions); err != nil {
+				fmt.Fprintf(os.Stderr, err.Error())
+				return
 			}
 
-			if !skip {
-				templateOptions := templateOptions{
-					files:       files,
-					chart:       tempDir,
-					name:        release,
-					namespace:   u.namespace,
-					values:      u.values,
-					valuesFiles: u.valueFiles,
-				}
-				if err := template(templateOptions); err != nil {
-					skip = true
-				}
+			injectOptions := injectOptions{
+				injector: u.injector,
+				command:  u.command,
+				files:    files,
 			}
-			if !skip {
-				injectOptions := injectOptions{
-					injector: u.injector,
-					command:  u.command,
-					files:    files,
-				}
-				if err := inject(injectOptions); err != nil {
-					skip = true
-					fmt.Fprintf(os.Stderr, err.Error())
-				}
-			}
-			if !skip {
-				upgradeOptions := upgradeOptions{
-					chart:       tempDir,
-					name:        release,
-					values:      u.values,
-					valuesFiles: u.valueFiles,
-					namespace:   u.namespace,
-					kubeContext: u.kubeContext,
-					timeout:     u.timeout,
-					install:     u.install,
-					dryRun:      u.dryRun,
-					debug:       u.debug,
-					tls:         u.tls,
-					tlsCert:     u.tlsCert,
-					tlsKey:      u.tlsKey,
-				}
-				if err := upgrade(upgradeOptions); err != nil {
-					fmt.Fprintf(os.Stderr, err.Error())
-				}
+			if err := inject(injectOptions); err != nil {
+				fmt.Fprintf(os.Stderr, err.Error())
+				return
 			}
 
-			os.RemoveAll(tempDir)
+			upgradeOptions := upgradeOptions{
+				chart:       tempDir,
+				name:        release,
+				values:      u.values,
+				valuesFiles: u.valueFiles,
+				namespace:   u.namespace,
+				kubeContext: u.kubeContext,
+				timeout:     u.timeout,
+				install:     u.install,
+				dryRun:      u.dryRun,
+				debug:       u.debug,
+				tls:         u.tls,
+				tlsCert:     u.tlsCert,
+				tlsKey:      u.tlsKey,
+			}
+			if err := upgrade(upgradeOptions); err != nil {
+				fmt.Fprintf(os.Stderr, err.Error())
+				return
+			}
 		},
 	}
 	f := cmd.Flags()
@@ -274,27 +267,12 @@ func inject(o injectOptions) error {
 	for _, file := range o.files {
 		command := fmt.Sprintf("%s %s %s", o.injector, o.command, file)
 		output := Exec(command)
-		if o.injector == "linkerd" {
-			output = removeSummary(output)
-		}
 		if err := ioutil.WriteFile(file, output, 0644); err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func removeSummary(input []byte) []byte {
-	lines := strings.Split(string(input), "\n")
-	lastLine := 0
-	for i := len(lines) - 1; i >= 0; i-- {
-		if strings.HasPrefix(lines[i], "---") {
-			lastLine = i
-			break
-		}
-	}
-	return []byte(strings.Join(lines[:lastLine], "\n"))
 }
 
 type upgradeOptions struct {
@@ -360,7 +338,7 @@ func Exec(cmd string) []byte {
 		log.Fatal(err)
 	}
 
-	output, err := exec.Command(binary, args[1:]...).CombinedOutput()
+	output, err := exec.Command(binary, args[1:]...).Output()
 	if err != nil {
 		log.Fatal(string(output))
 	}
