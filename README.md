@@ -26,19 +26,21 @@ Usage:
   inject upgrade [RELEASE] [CHART] [flags]
 
 Flags:
-      --command string       injection command to be used (default "inject")
-      --debug                enable verbose output
-      --dry-run              simulate an upgrade
-      --injector string      injector to use (must be pre-installed) (default "linkerd")
-  -i, --install              if a release by this name doesn't already exist, run an install
-      --kubecontext string   name of the kubeconfig context to use
-      --namespace string     namespace to install the release into (only used if --install is set). Defaults to the current kube config namespace
-      --set stringArray      set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)
-      --timeout int          time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks) (default 300)
-      --tls                  enable TLS for request
-      --tls-cert string      path to TLS certificate file (default: $HELM_HOME/cert.pem)
-      --tls-key string       path to TLS key file (default: $HELM_HOME/key.pem)
-  -f, --values stringArray   specify values in a YAML file or a URL (can specify multiple)
+      --command string         injection command to be used (default "inject")
+      --debug                  enable verbose output
+      --dry-run                simulate an upgrade
+  -h, --help                   help for upgrade
+      --inject-flags strings   flags to be passed to injector, without leading "--" (can specify multiple). Example: "--inject-flags tls=optional,skip-inbound-ports=25,skip-inbound-ports=26"
+      --injector string        injector to use (must be pre-installed) (default "linkerd")
+  -i, --install                if a release by this name doesn't already exist, run an install
+      --kubecontext string     name of the kubeconfig context to use
+      --namespace string       namespace to install the release into (only used if --install is set). Defaults to the current kube config namespace
+      --set stringArray        set values on the command line (can specify multiple)
+      --timeout int            time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks) (default 300)
+      --tls                    enable TLS for request
+      --tls-cert string        path to TLS certificate file (default: $HELM_HOME/cert.pem)
+      --tls-key string         path to TLS key file (default: $HELM_HOME/key.pem)
+  -f, --values stringArray     specify values in a YAML file or a URL (can specify multiple)
 ```
 
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -43,6 +44,7 @@ func NewRootCmd(args []string) *cobra.Command {
 type upgradeCmd struct {
 	injector    string
 	command     string
+	injectFlags []string
 	release     string
 	chart       string
 	dryRun      bool
@@ -84,10 +86,10 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 
 			tempDir, err := copyToTempDir(chart)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, err.Error())
+				fmt.Println(err)
 				return
 			}
-			defer os.RemoveAll(tempDir)
+			// defer os.RemoveAll(tempDir)
 
 			fileOptions := fileOptions{
 				basePath:     tempDir,
@@ -96,7 +98,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 			}
 			files, err := getFilesToActOn(fileOptions)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, err.Error())
+				fmt.Println(err)
 				return
 			}
 
@@ -109,17 +111,18 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 				valuesFiles: u.valueFiles,
 			}
 			if err := template(templateOptions); err != nil {
-				fmt.Fprintf(os.Stderr, err.Error())
+				fmt.Println(err)
 				return
 			}
 
 			injectOptions := injectOptions{
-				injector: u.injector,
-				command:  u.command,
-				files:    files,
+				injector:    u.injector,
+				command:     u.command,
+				injectFlags: u.injectFlags,
+				files:       files,
 			}
 			if err := inject(injectOptions); err != nil {
-				fmt.Fprintf(os.Stderr, err.Error())
+				fmt.Println(err)
 				return
 			}
 
@@ -139,7 +142,7 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 				tlsKey:      u.tlsKey,
 			}
 			if err := upgrade(upgradeOptions); err != nil {
-				fmt.Fprintf(os.Stderr, err.Error())
+				fmt.Println(err)
 				return
 			}
 		},
@@ -148,9 +151,10 @@ func NewUpgradeCommand(out io.Writer) *cobra.Command {
 
 	f.StringVar(&u.injector, "injector", "linkerd", "injector to use (must be pre-installed)")
 	f.StringVar(&u.command, "command", "inject", "injection command to be used")
+	f.StringSliceVar(&u.injectFlags, "inject-flags", []string{}, "flags to be passed to injector, without leading \"--\" (can specify multiple). Example: \"--inject-flags tls=optional,skip-inbound-ports=25,skip-inbound-ports=26\"")
 
 	f.StringArrayVarP(&u.valueFiles, "values", "f", []string{}, "specify values in a YAML file or a URL (can specify multiple)")
-	f.StringArrayVar(&u.values, "set", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+	f.StringArrayVar(&u.values, "set", []string{}, "set values on the command line (can specify multiple)")
 	f.StringVar(&u.namespace, "namespace", "", "namespace to install the release into (only used if --install is set). Defaults to the current kube config namespace")
 	f.StringVar(&u.kubeContext, "kubecontext", "", "name of the kubeconfig context to use")
 	f.IntVar(&u.timeout, "timeout", 300, "time in seconds to wait for any individual Kubernetes operation (like Jobs for hooks)")
@@ -176,7 +180,10 @@ func copyToTempDir(path string) (string, error) {
 	}
 	if !exists {
 		command := fmt.Sprintf("helm fetch %s --untar -d %s", path, tempDir)
-		Exec(command)
+		_, stderr, err := Exec(command)
+		if err != nil || len(stderr) != 0 {
+			return "", fmt.Errorf(string(stderr))
+		}
 		files, err := ioutil.ReadDir(tempDir)
 		if err != nil {
 			return "", err
@@ -248,8 +255,11 @@ func template(o templateOptions) error {
 
 	for _, file := range o.files {
 		command := fmt.Sprintf("helm template --debug=false %s --name %s -x %s%s", o.chart, o.name, file, additionalFlags)
-		output := Exec(command)
-		if err := ioutil.WriteFile(file, output, 0644); err != nil {
+		stdout, stderr, err := Exec(command)
+		if err != nil || len(stderr) != 0 {
+			return fmt.Errorf(string(stderr))
+		}
+		if err := ioutil.WriteFile(file, stdout, 0644); err != nil {
 			return err
 		}
 	}
@@ -258,16 +268,29 @@ func template(o templateOptions) error {
 }
 
 type injectOptions struct {
-	injector string
-	command  string
-	files    []string
+	injector    string
+	command     string
+	injectFlags []string
+	files       []string
 }
 
 func inject(o injectOptions) error {
+	var flags string
+	for _, flag := range o.injectFlags {
+		flagSplit := strings.Split(flag, "=")
+		if len(flagSplit) != 2 {
+			return fmt.Errorf("inject-flags must be in the form of key1=value1[,key2=value2,...]")
+		}
+		key, val := flagSplit[0], flagSplit[1]
+		flags += createFlagChain(key, []string{val})
+	}
 	for _, file := range o.files {
-		command := fmt.Sprintf("%s %s %s", o.injector, o.command, file)
-		output := Exec(command)
-		if err := ioutil.WriteFile(file, output, 0644); err != nil {
+		command := fmt.Sprintf("%s %s%s %s", o.injector, o.command, flags, file)
+		stdout, stderr, err := Exec(command)
+		if err != nil {
+			return fmt.Errorf(string(stderr))
+		}
+		if err := ioutil.WriteFile(file, stdout, 0644); err != nil {
 			return err
 		}
 	}
@@ -323,26 +346,34 @@ func upgrade(o upgradeOptions) error {
 	}
 
 	command := fmt.Sprintf("helm upgrade %s %s%s", o.name, o.chart, additionalFlags)
-	output := Exec(command)
-	fmt.Println(string(output))
+	stdout, stderr, err := Exec(command)
+	if err != nil || len(stderr) != 0 {
+		return fmt.Errorf(string(stderr))
+	}
+	fmt.Println(string(stdout))
 
 	return nil
 }
 
 // Exec takes a command as a string and executes it
-func Exec(cmd string) []byte {
+func Exec(cmd string) ([]byte, []byte, error) {
 	args := strings.Split(cmd, " ")
 	binary := args[0]
 	_, err := exec.LookPath(binary)
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, err
 	}
 
-	output, err := exec.Command(binary, args[1:]...).Output()
+	command := exec.Command(binary, args[1:]...)
+	var stdout, stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	err = command.Run()
 	if err != nil {
-		log.Fatal(string(output))
+		log.Print(stderr.String())
+		log.Fatal(err)
 	}
-	return output
+	return stdout.Bytes(), stderr.Bytes(), err
 }
 
 // MkRandomDir creates a new directory with a random name made of numbers
