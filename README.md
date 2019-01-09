@@ -3,7 +3,7 @@
 This is a Helm plugin which provides the ability to inject additional configuration during Helm release upgrade. It works like
 `helm upgrade`, but with a `--inject` flag.
 
-The default injector is [linkerd](https://linkerd.io/), but you can specify `--injector` to use any other binary with an `inject` command such as:
+The default injector is [linkerd](https://linkerd.io/), but you can specify `--injector` to use any other executable in your $PATH with an `inject` command such as:
 ```
 myInjector inject /path/to/file.yaml
 ```
@@ -78,3 +78,7 @@ That last command will skip fetching the binary install and use the one you buil
 * Not all `helm upgrade` flags are added. If you need any other flags from `helm upgrade` - you are welcome to open an issue, or even submit a PR.
 * If you want to pass any flags to the injector - use the `--inject-flags` flag.
 * If you are using the `--kube-context` flag, you need to change it to `--kubecontext`, since helm plugins [drop this flag](https://github.com/helm/helm/blob/master/docs/plugins.md#a-note-on-flag-parsing).
+
+### Examples
+
+Check out the first example of a custom executable in the [examples](/examples) section!

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# 'command' will get the first argument passed to myExecutable
+# by default, this will be 'inject', but can be changed using the plugin's '--command' flag
+# using 'command' allows you to implement multiple commands in this file
+# for simplicity, we will ignore it in this example
+command=$1
+
+# 'file' will get the second argument passed to myExecutable
+# this is the file path to modify in this script
+file=$2
+
+# additional flags can be supplied using the '--inject-flags' flag
+
+# in this example we will modify only 'Deployment' resources
+
+# first, let's make sure this is indeed a 'Deployment'
+if [ "$(cat $file | grep 'kind: Deployment')" == "" ]; then
+    exit 0
+fi
+
+# we will make sure that the 'Deployment' is applied with apiVersion: apps/v1
+sed -i -e 's|apiVersion: .*|apiVersion: apps/v1|g' $file
